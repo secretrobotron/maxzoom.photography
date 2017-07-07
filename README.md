@@ -3,4 +3,4 @@
 ## TODO:
 
 - implement server side for saving
-- implement "double down" which moves output to input!
+- ~implement "double down" which moves output to input!~
