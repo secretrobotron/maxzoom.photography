@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var zoomedIntermediaryImage = document.createElement('canvas');
   var zoomedImage = document.querySelector('#zoomed-image');
   var storedImage = document.querySelector('#stored-image');
+  var outputSizeRange = document.querySelector('#output-size');
+
+  function setIntermediaryImageSize () {
+    var size = Math.round(Math.pow(2, outputSizeRange.max - outputSizeRange.value)*5);
+
+    zoomedIntermediaryImage.width = size;
+    zoomedIntermediaryImage.height = size;
+  }
 
   function processZoomedImage () {
     var imageRect = storedImage.getBoundingClientRect();
@@ -60,6 +68,16 @@ document.addEventListener('DOMContentLoaded', function () {
     finalContext.drawImage(zoomedIntermediaryImage,
       0, 0, zoomedIntermediaryImage.width, zoomedIntermediaryImage.height,
       0, 0, zoomedImage.width, zoomedImage.height);
+
+    try {
+      finalContext.getImageData(0, 0, 1, 1);
+      document.querySelector('#download').disabled = false;
+    }
+    catch (e) {
+      document.querySelector('#download').disabled = true;
+    }
+
+    console.log(document.querySelector('#download').disabled);
   }
 
   storedImage.onload = function () {
@@ -71,9 +89,6 @@ document.addEventListener('DOMContentLoaded', function () {
       storedImage.style.width = 'auto';
       storedImage.style.height = '100%';
     }
-
-    zoomedIntermediaryImage.width = Math.min(storedImage.naturalWidth, storedImage.naturalHeight);
-    zoomedIntermediaryImage.height = Math.min(storedImage.naturalWidth, storedImage.naturalHeight);
 
     processZoomedImage();
   };
@@ -93,10 +108,8 @@ document.addEventListener('DOMContentLoaded', function () {
     processZoomedImage();
   });
 
-  document.querySelector('#output-size').addEventListener('input', function (e) {
-    zoomedIntermediaryImage.width = e.target.value * 10;
-    zoomedIntermediaryImage.height = e.target.value * 10;
-
+  outputSizeRange.addEventListener('input', function (e) {
+    setIntermediaryImageSize();
     processZoomedImage();
   });
 
@@ -141,6 +154,8 @@ document.addEventListener('DOMContentLoaded', function () {
     imageDropZone.classList.remove('dragover');
     imageDropZone.classList.remove('nothing-yet');
     
+    setIntermediaryImageSize();
+
     var url = e.dataTransfer.getData('URL');
 
     if (url) {
