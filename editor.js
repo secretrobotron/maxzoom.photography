@@ -1,3 +1,15 @@
+// From https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+function guid() {
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
+
+function s4() {
+  return Math.floor((1 + Math.random()) * 0x10000)
+    .toString(16)
+    .substring(1);
+}
+
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -223,6 +235,11 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('drop', function (e) {
     e.preventDefault();
     document.body.classList.remove('dragging');
+  });
+
+  document.querySelector('#download').addEventListener('click', function () {
+    var dataURL = zoomedImage.toDataURL('image/jpg');
+    download(dataURL, guid() + '.jpg', 'image/jpg');
   });
 
 });
