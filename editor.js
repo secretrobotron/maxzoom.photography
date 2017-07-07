@@ -10,12 +10,12 @@ function s4() {
     .substring(1);
 }
 
-
 document.addEventListener('DOMContentLoaded', function () {
 
   var imageDropZone = document.querySelector('#image-drop-zone');
   var imageContainer = document.querySelector('#image-container');
   var zoomSelector = document.querySelector('#zoom-selector');
+  var zoomedIntermediaryImage = document.createElement('canvas');
   var zoomedImage = document.querySelector('#zoomed-image');
   var storedImage = document.querySelector('#stored-image');
 
@@ -44,16 +44,21 @@ document.addEventListener('DOMContentLoaded', function () {
       };
     }
 
-    var context = zoomedImage.getContext('2d');
+    var intermediaryContext = zoomedIntermediaryImage.getContext('2d');
+    var finalContext = zoomedImage.getContext('2d');
 
     var widthRatio = storedImage.width / storedImage.naturalWidth;
     var heightRatio = storedImage.height / storedImage.naturalHeight;
 
-    context.drawImage(storedImage,
+    intermediaryContext.drawImage(storedImage,
       rect.left / widthRatio,
       rect.top / heightRatio,
       rect.width / widthRatio,
       rect.height / heightRatio,
+      0, 0, zoomedIntermediaryImage.width, zoomedIntermediaryImage.height);
+
+    finalContext.drawImage(zoomedIntermediaryImage,
+      0, 0, zoomedIntermediaryImage.width, zoomedIntermediaryImage.height,
       0, 0, zoomedImage.width, zoomedImage.height);
   }
 
@@ -66,6 +71,9 @@ document.addEventListener('DOMContentLoaded', function () {
       storedImage.style.width = 'auto';
       storedImage.style.height = '100%';
     }
+
+    zoomedIntermediaryImage.width = Math.min(storedImage.naturalWidth, storedImage.naturalHeight);
+    zoomedIntermediaryImage.height = Math.min(storedImage.naturalWidth, storedImage.naturalHeight);
 
     processZoomedImage();
   };
@@ -86,8 +94,8 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.querySelector('#output-size').addEventListener('input', function (e) {
-    zoomedImage.width = e.target.value * 10;
-    zoomedImage.height = e.target.value * 10;
+    zoomedIntermediaryImage.width = e.target.value * 10;
+    zoomedIntermediaryImage.height = e.target.value * 10;
 
     processZoomedImage();
   });
@@ -154,35 +162,78 @@ document.addEventListener('DOMContentLoaded', function () {
   zoomSelector.addEventListener('mousedown', function (e) {
     e.preventDefault();
 
-    var minLeft = storedImage.offsetLeft;
-    var minTop = storedImage.offsetTop;
-    var maxLeft = storedImage.offsetWidth - zoomSelector.offsetWidth;
-    var maxTop = storedImage.offsetHeight - zoomSelector.offsetHeight + storedImage.offsetTop;
+    function initZoomSelectorMovement () {
+      var minLeft = storedImage.offsetLeft;
+      var minTop = storedImage.offsetTop;
+      var maxLeft = storedImage.offsetWidth - zoomSelector.offsetWidth + storedImage.offsetLeft;
+      var maxTop = storedImage.offsetHeight - zoomSelector.offsetHeight + storedImage.offsetTop;
 
-    var originalMousePosition = [e.clientX, e.clientY];
-    var originalZoomRectPosition = [zoomSelector.offsetLeft, zoomSelector.offsetTop];
+      var originalMousePosition = [e.clientX, e.clientY];
+      var originalZoomRectPosition = [zoomSelector.offsetLeft, zoomSelector.offsetTop];
 
-    function onMouseMove (e) {
-      e.preventDefault();
+      function onMouseMove (e) {
+        e.preventDefault();
 
-      var newMousePosition = [e.clientX, e.clientY];
-      var difference = [newMousePosition[0] - originalMousePosition[0], newMousePosition[1] - originalMousePosition[1]];
+        var newMousePosition = [e.clientX, e.clientY];
+        var difference = [newMousePosition[0] - originalMousePosition[0], newMousePosition[1] - originalMousePosition[1]];
 
-      zoomSelector.style.left = Math.min(maxLeft, Math.max(minLeft, (originalZoomRectPosition[0] + difference[0]))) + 'px';
-      zoomSelector.style.top = Math.min(maxTop, Math.max(minTop, (originalZoomRectPosition[1] + difference[1]))) + 'px';
+        zoomSelector.style.left = Math.min(maxLeft, Math.max(minLeft, (originalZoomRectPosition[0] + difference[0]))) + 'px';
+        zoomSelector.style.top = Math.min(maxTop, Math.max(minTop, (originalZoomRectPosition[1] + difference[1]))) + 'px';
+
+        processZoomedImage();
+      }
+
+      function onMouseUp (e) {
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('mousemove', onMouseMove);
+      }
+
+      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('mousemove', onMouseMove);
 
       processZoomedImage();
     }
 
-    function onMouseUp (e) {
-      document.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('mousemove', onMouseMove);
+    function initZoomSelectorResize () {
+      var originalSize = zoomSelector.offsetWidth / 2;
+      var originalOffset = [zoomSelector.offsetLeft + originalSize, zoomSelector.offsetTop + originalSize];
+      var originalMousePosition = [e.clientX - originalSize, e.clientY - originalSize];
+
+      function onMouseMove (e) {
+        e.preventDefault();
+
+        var newMousePosition = [e.clientX, e.clientY];
+        var difference = [
+          Math.abs(newMousePosition[0] - originalMousePosition[0]), 
+          Math.abs(newMousePosition[1] - originalMousePosition[1])
+        ];
+        var newSize = Math.max(difference[0], difference[1]);
+
+        zoomSelector.style.width = (newSize * 2) + 'px';
+        zoomSelector.style.height = (newSize * 2) + 'px';
+        zoomSelector.style.left = originalOffset[0] - (newSize) + 'px';
+        zoomSelector.style.top = originalOffset[1] - (newSize) + 'px';
+        processZoomedImage();
+      }
+
+      function onMouseUp (e) {
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('mousemove', onMouseMove);
+      }
+
+      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('mousemove', onMouseMove);
+
+      processZoomedImage();
     }
 
-    document.addEventListener('mouseup', onMouseUp);
-    document.addEventListener('mousemove', onMouseMove);
+    if (e.shiftKey && zoomSelector.classList.contains('on')) {
+      initZoomSelectorResize();
+    }
+    else {
+      initZoomSelectorMovement();
+    }
 
-    processZoomedImage();
   });
 
   storedImage.addEventListener('mousedown', function (e) {
@@ -233,6 +284,34 @@ document.addEventListener('DOMContentLoaded', function () {
     processZoomedImage();
   });
 
+  function nudgeZoomSelector (xDirection, yDirection) {
+    var minLeft = storedImage.offsetLeft;
+    var minTop = storedImage.offsetTop;
+    var maxLeft = storedImage.offsetWidth - zoomSelector.offsetWidth + storedImage.offsetLeft;
+    var maxTop = storedImage.offsetHeight - zoomSelector.offsetHeight + storedImage.offsetTop;
+
+    var zoomRectPosition = [zoomSelector.offsetLeft, zoomSelector.offsetTop];
+
+    zoomSelector.style.left = Math.min(maxLeft, Math.max(minLeft, (zoomRectPosition[0] + xDirection))) + 'px';
+    zoomSelector.style.top = Math.min(maxTop, Math.max(minTop, (zoomRectPosition[1] + yDirection))) + 'px';
+
+    processZoomedImage();
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.keyCode === 37) {
+      nudgeZoomSelector(-1, 0);
+    }
+    else if (e.keyCode === 38) {
+      nudgeZoomSelector(0, -1);
+    }
+    else if (e.keyCode === 39) {
+      nudgeZoomSelector(1, 0);
+    }
+    else if (e.keyCode === 40) {
+      nudgeZoomSelector(0, 1);
+    }
+  });
 
   document.addEventListener('dragover', function (e) {
     e.preventDefault();
