@@ -19,41 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var zoomedImage = document.querySelector('#zoomed-image');
   var storedImage = document.querySelector('#stored-image');
 
-  document.querySelector('#clear-selection').addEventListener('click', function (e) {
-    zoomSelector.classList.remove('on');
-
-    processZoomedImage();
-  });
-
-  document.querySelector('#output-size').addEventListener('input', function (e) {
-    zoomedImage.width = e.target.value * 10;
-    zoomedImage.height = e.target.value * 10;
-
-    processZoomedImage();
-  });
-
-  document.querySelector('#image-smoothing-toggle').addEventListener('change', function (e) {
-    var context = zoomedImage.getContext('2d');
-
-    context.imageSmoothingEnabled = e.target.checked;
-    context.webkitImageSmoothingEnabled = e.target.checked;
-    context.mozImageSmoothingEnabled = e.target.checked;
-
-    processZoomedImage();
-  });
-
-  document.querySelector('#image-smoothing-quality').addEventListener('input', function (e) {
-    var context = zoomedImage.getContext('2d');
-
-    var values = ["low", "medium", "high"];
-
-    context.imageSmoothingQuality = values[e.target.value];
-    context.webkitImageSmoothingQuality = values[e.target.value];
-    context.mozImageSmoothingQuality = values[e.target.value];
-
-    processZoomedImage();
-  });
-
   function processZoomedImage () {
     var imageRect = storedImage.getBoundingClientRect();
     var zoomRect = zoomSelector.getBoundingClientRect();
@@ -92,6 +57,63 @@ document.addEventListener('DOMContentLoaded', function () {
       0, 0, zoomedImage.width, zoomedImage.height);
   }
 
+  storedImage.onload = function () {
+    if (storedImage.naturalWidth > storedImage.naturalHeight) {
+      storedImage.style.width = '100%';
+      storedImage.style.height = 'auto';
+    }
+    else {
+      storedImage.style.width = 'auto';
+      storedImage.style.height = '100%';
+    }
+
+    processZoomedImage();
+  };
+
+  document.querySelector('#double-down').addEventListener('click', function () {
+    storedImage.src = zoomedImage.toDataURL('image/jpg');
+  });
+
+  document.querySelector('#download').addEventListener('click', function () {
+    var dataURL = zoomedImage.toDataURL('image/jpg');
+    download(dataURL, guid() + '.jpg', 'image/jpg');
+  });
+
+  document.querySelector('#clear-selection').addEventListener('click', function (e) {
+    zoomSelector.classList.remove('on');
+
+    processZoomedImage();
+  });
+
+  document.querySelector('#output-size').addEventListener('input', function (e) {
+    zoomedImage.width = e.target.value * 10;
+    zoomedImage.height = e.target.value * 10;
+
+    processZoomedImage();
+  });
+
+  document.querySelector('#image-smoothing-toggle').addEventListener('change', function (e) {
+    var context = zoomedImage.getContext('2d');
+
+    context.imageSmoothingEnabled = e.target.checked;
+    context.webkitImageSmoothingEnabled = e.target.checked;
+    context.mozImageSmoothingEnabled = e.target.checked;
+
+    processZoomedImage();
+  });
+
+  document.querySelector('#image-smoothing-quality').addEventListener('input', function (e) {
+    var context = zoomedImage.getContext('2d');
+
+    var values = ["low", "medium", "high"];
+
+    context.imageSmoothingQuality = values[e.target.value];
+    context.webkitImageSmoothingQuality = values[e.target.value];
+    context.mozImageSmoothingQuality = values[e.target.value];
+
+    processZoomedImage();
+  });
+
   imageDropZone.addEventListener('dragover', function (e) {
     e.preventDefault();
     imageDropZone.classList.add('dragover');
@@ -112,21 +134,6 @@ document.addEventListener('DOMContentLoaded', function () {
     imageDropZone.classList.remove('nothing-yet');
     
     var url = e.dataTransfer.getData('URL');
-
-    function resizeStoredImage () {
-      if (storedImage.naturalWidth > storedImage.naturalHeight) {
-        storedImage.style.width = '100%';
-        storedImage.style.height = 'auto';
-      }
-      else {
-        storedImage.style.width = 'auto';
-        storedImage.style.height = '100%';
-      }
-
-      processZoomedImage();
-    }
-
-    storedImage.onload = resizeStoredImage;
 
     if (url) {
       storedImage.src = url;
@@ -236,11 +243,6 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('drop', function (e) {
     e.preventDefault();
     document.body.classList.remove('dragging');
-  });
-
-  document.querySelector('#download').addEventListener('click', function () {
-    var dataURL = zoomedImage.toDataURL('image/jpg');
-    download(dataURL, guid() + '.jpg', 'image/jpg');
   });
 
 });
