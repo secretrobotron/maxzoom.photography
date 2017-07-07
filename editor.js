@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.classList.remove('dragging');
     zoomSelector.classList.remove('on');
     imageDropZone.classList.remove('dragover');
+    imageDropZone.classList.remove('nothing-yet');
     
     var url = e.dataTransfer.getData('URL');
 

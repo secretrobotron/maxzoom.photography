@@ -99,16 +99,16 @@ body.dragging #controls, body.dragging #zoomed-image {
 body.dragging #image-drop-zone {
 }
 
-body.dragging #image-drop-zone:before {
+#image-drop-zone.nothing-yet:before {
   display: block;
-  content: 'Drop Here';
+  content: 'Drop Image Here';
   font-size: 50pt;
   line-height: 50pt;
   font-weight: bold;
   position: absolute;
   top: 50%;
   width: 100%;
-  margin-top: -25pt;
+  margin-top: -50pt;
   pointer-events: none;
   color: #269;
 }
